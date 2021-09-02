@@ -246,3 +246,4 @@ var loadTasks = function() {
   pageContentEl.addEventListener("change", taskStatusChangeHandler);
 
   loadTasks();
+
