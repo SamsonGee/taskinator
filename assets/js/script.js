@@ -1,11 +1,48 @@
-var tasks = []
-
 var taskIdCounter = 0;
+
 var formEl = document.querySelector("#task-form");
 var tasksToDoEl = document.querySelector("#tasks-to-do");
 var pageContentEl = document.querySelector("#page-content");
 var tasksInProgressEl = document.querySelector("#tasks-in-progress");
 var tasksCompletedEl = document.querySelector("#tasks-completed");
+
+// create array to hold tasks for saving 
+var tasks = [];
+
+var taskFormHandler = function(event) {
+  event.preventDefault();
+  var taskNameInput = document.querySelector("input[name='task-name']").value;
+  var taskTypeInput = document.querySelector("select[name='task-type']").value;
+  
+  // check if input values are empty strings
+  if (!taskNameInput || !taskTypeInput) {
+    alert("You need to fill out the task form!");
+  return false;
+  }
+  
+  //reset form fields for next rounds to be entered
+  document.querySelector("input[name='task-name']").value = "";
+  document.querySelector("select[name='task-type']").selectedIndex = 0;
+  
+  // check to see if this is an edit, and if so update already made element
+  var isEdit = formEl.hasAttribute("data-task-id");
+  
+  if (isEdit) {
+    var taskId = formEl.getAttribute("data-task-id");
+    completeEditTask(taskNameInput, taskTypeInput, taskId);
+  } 
+  else {
+    var taskDataObj = {
+      name: taskNameInput,
+      type: taskTypeInput,
+      status: "to do"
+    };
+    
+    createTaskEl(taskDataObj);
+  }
+  // resets after itmes selected 
+  formEl.reset();
+}
 
 var deleteTask = function(taskId) {
   var taskSelected = document.querySelector(".task-item[data-task-id='" + taskId + "']");
@@ -65,41 +102,6 @@ var completeEditTask = function(taskName, taskType, taskId) {
   saveTasks();
 };
 
-var taskFormHandler = function(event) {
-  event.preventDefault();
-  var taskNameInput = document.querySelector("input[name='task-name']").value;
-  var taskTypeInput = document.querySelector("select[name='task-type']").value;
-  var isEdit = formEl.hasAttribute("data-task-id");
-  
-  // check if input values are empty strings
-  if (!taskNameInput || !taskTypeInput) {
-    alert("You need to fill out the task form!");
-  return false;
-  }
-  
-  // had a data attribute, so get taskId and call function to complete edit
-  if (isEdit) {
-    var taskId = formEl.getAttribute("data-task-id");
-    completeEditTask(taskNameInput, taskTypeInput, taskId);
-  } 
-  // no data attribute, so create object as normal and pass to createTaskEl function
-  else {
-    var taskDataObj = {
-      id: 1,
-      name: taskNameInput,
-      type: taskTypeInput,
-      status: "to do"
-    };
-    
-    createTaskEl(taskDataObj);
-  }
-
-  
-
-  // resets after itmes selected 
-  formEl.reset();
-}
-
 var createTaskActions = function(taskId) {
     var actionContainerEl = document.createElement("div");
     actionContainerEl.className = "task-actions";
@@ -148,25 +150,32 @@ var createTaskEl = function(taskDataObj) {
   // create list item
   var listItemEl = document.createElement("li");
   listItemEl.className = "task-item";
-
-  // add task id as a custom attribute
   listItemEl.setAttribute("data-task-id", taskIdCounter);
 
-  // create div to hold task info and add to list item
   var taskInfoEl = document.createElement("div");
-  // give it a class name
   taskInfoEl.className = "task-info";
-  // add HTML content to div
   taskInfoEl.innerHTML = "<h3 class='task-name'>" + taskDataObj.name + "</h3><span class='task-type'>" + taskDataObj.type + "</span>";
-
-  // adding info to the task
   listItemEl.appendChild(taskInfoEl);
 
   var taskActionsEl = createTaskActions(taskIdCounter);
   listItemEl.appendChild(taskActionsEl);
 
-  // add entire list item to list
-  tasksToDoEl.appendChild(listItemEl);
+  switch (taskDataObj.status) {
+    case "to do":
+      taskActionsEl.querySelector("select[name='status-change']").selectedIndex = 0;
+      tasksToDoEl.append(listItemEl);
+      break;
+    case "in progress":
+      taskActionsEl.querySelector("select[name='status-change']").selectedIndex = 1;
+      tasksInProgressEl.append(listItemEl);
+      break;
+    case "completed":
+      taskActionsEl.querySelector("select[name='status-change']").selectedIndex = 2;
+      tasksCompletedEl.append(listItemEl);
+      break;
+    default:
+      console.log("Something went wrong!");
+  }
 
   taskDataObj.id = taskIdCounter;
 
